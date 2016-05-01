@@ -1,5 +1,5 @@
 #!/bin/bash
-# Stock Samsung kernel for Samsung Galaxy S7 build script by jcadduono
+# NetHunter kernel for Samsung Galaxy S7 build script by jcadduono
 
 ################### BEFORE STARTING ################
 #
@@ -47,7 +47,7 @@ export CROSS_COMPILE=$TOOLCHAIN/bin/aarch64-linux-gnu-
 [ -x "${CROSS_COMPILE}gcc" ] ||
 ABORT "Unable to find gcc cross-compiler at location: ${CROSS_COMPILE}gcc"
 
-[ "$TARGET" ] || TARGET=samsung
+[ "$TARGET" ] || TARGET=nethunter
 [ "$1" ] && DEVICE=$1
 [ "$2" ] && VARIANT=$2
 [ "$DEVICE" ] || DEVICE=herolte
