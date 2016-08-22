@@ -766,7 +766,6 @@ u64 get_sensor_scanning_info(struct ssp_data *data)
 {
 	int iRet = 0, z = 0;
 	u64 result = 0;
-	char bin[SENSOR_MAX + 1];
 	struct ssp_msg *msg = kzalloc(sizeof(*msg), GFP_KERNEL);
 
 	if (msg == NULL) {
@@ -786,10 +785,10 @@ u64 get_sensor_scanning_info(struct ssp_data *data)
 	if (iRet != SUCCESS)
 		pr_err("[SSP]: %s - i2c fail %d\n", __func__, iRet);
 
-	bin[SENSOR_MAX] = '\0';
+	data->sensor_state[SENSOR_MAX] = '\0';
 	for (z = 0; z < SENSOR_MAX; z++)
-		bin[SENSOR_MAX - 1 - z] = (result & (1 << z)) ? '1' : '0';
-	pr_err("[SSP]: state: %s\n", bin);
+		data->sensor_state[SENSOR_MAX - 1 - z] = (result & (1 << z)) ? '1' : '0';
+	pr_err("[SSP]: state: %s\n", data->sensor_state);
 
 	return result;
 }
