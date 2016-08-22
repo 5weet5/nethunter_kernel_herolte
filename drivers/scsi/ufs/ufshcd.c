@@ -222,7 +222,6 @@ static int ufshcd_send_request_sense(struct ufs_hba *hba, struct scsi_device *sd
 extern int fmp_map_sg(struct ufshcd_sg_entry *prd_table, struct scatterlist *sg,
 					uint32_t sector_key, uint32_t idx,
 					uint32_t sector);
-extern int fmp_encrypted;
 
 #if defined(CONFIG_UFS_FMP_ECRYPT_FS)
 extern void fmp_clear_sg(struct ufshcd_lrb *lrbp);
@@ -1199,18 +1198,6 @@ static int ufshcd_map_sg(struct ufs_hba *hba, struct ufshcd_lrb *lrbp)
 			if (sector_key == UFS_BYPASS_SECTOR_BEGIN) {
 				SET_DAS(&prd_table[i], CLEAR);
 				SET_FAS(&prd_table[i], CLEAR);
-
-				if (cmd->request->part) {
-					if (cmd->request->part->info) {
-						if(!strncmp(cmd->request->part->info->volname, "userdata", sizeof("userdata")) \
-								&& fmp_encrypted \
-								&& (cmd->request->bio->bi_rw & REQ_META))
-							dev_err(hba->dev, "FMP doesn't work even if device is encrypted. direction(%d). sector(%ld). \
-												sensitive_data(%d)\n",
-									cmd->sc_data_direction, cmd->request->bio->bi_iter.bi_sector,
-									cmd->request->bio->bi_sensitive_data);
-					}
-				}
 			} else {
 				unsigned long flags;
 				ret = fmp_map_sg(prd_table, sg, sector_key, i, sector);

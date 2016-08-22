@@ -510,7 +510,6 @@ int ssp_motor_callback(int state)
 	int iRet = 0;
 	
 	ssp_data_info->motor_state = state;
-	iRet = send_motor_state(ssp_data_info);
 
 	queue_work(ssp_data_info->ssp_motor_wq,
 			&ssp_data_info->work_ssp_motor);
@@ -607,6 +606,7 @@ static int ssp_probe(struct spi_device *spi)
 	mutex_init(&data->comm_mutex);
 	mutex_init(&data->pending_mutex);
 	mutex_init(&data->enable_mutex);
+	mutex_init(&data->ssp_enable_mutex);
 
 	if (spi->dev.of_node == NULL) {
 		pr_err("[SSP] %s, function callback is null\n", __func__);
@@ -752,6 +752,7 @@ err_reset_null:
 	mutex_destroy(&data->comm_mutex);
 	mutex_destroy(&data->pending_mutex);
 	mutex_destroy(&data->enable_mutex);
+	mutex_destroy(&data->ssp_enable_mutex);
 #ifdef CONFIG_SENSORS_SSP_SHTC1
 	mutex_destroy(&data->bulk_temp_read_lock);
 	mutex_destroy(&data->cp_temp_adc_lock);
@@ -781,10 +782,10 @@ static void ssp_shutdown(struct spi_device *spi)
 		pr_err("[SSP]: %s MSG2SSP_AP_STATUS_SHUTDOWN failed\n",
 			__func__);
 	*/
-
+	mutex_lock(&data->ssp_enable_mutex);
 	ssp_enable(data, false);
 	clean_pending_list(data);
-
+	mutex_unlock(&data->ssp_enable_mutex);
 
 #ifdef CONFIG_HAS_EARLYSUSPEND
 	unregister_early_suspend(&data->early_suspend);
@@ -805,6 +806,13 @@ static void ssp_shutdown(struct spi_device *spi)
 #endif
 	data->bbd_on_packet_wq = NULL;
 	data->bbd_mcu_ready_wq = NULL;
+
+#ifdef CONFIG_SSP_MOTOR
+	cancel_work_sync(&data->work_ssp_motor);
+	destroy_workqueue(data->ssp_motor_wq);
+
+	data->ssp_motor_wq = NULL;
+#endif
 
 	mutex_unlock(&shutdown_lock);
 
@@ -827,6 +835,7 @@ static void ssp_shutdown(struct spi_device *spi)
 	mutex_destroy(&data->comm_mutex);
 	mutex_destroy(&data->pending_mutex);
 	mutex_destroy(&data->enable_mutex);
+	mutex_destroy(&data->ssp_enable_mutex);
 	pr_info("[SSP] %s done\n", __func__);
 exit:
 	kfree(data);
